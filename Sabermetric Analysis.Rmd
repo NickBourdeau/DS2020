@@ -1,0 +1,129 @@
+---
+title: "Sabermetrics Part 1" 
+fontsize: 12pt
+geometry: margin=1in
+urlcolor: black
+output: pdf_document
+header-includes:
+- \usepackage{setspace}
+- \onehalfspacing
+---
+
+## Background Information
+  The sport of baseball has experienced drastic revolutions over its long history, but nothing compared to the sabermetric revolution born in the early 2000's by the general manager of the Oakland A's named Billy Beane.  By definition sabermetrics is the empirical analysis of baseball data, and Billy Beane introduced statistical methods to the game of baseball in order to find talent on a very thin budget.  Essentially, Beane sought a way to "buy" wins using statistical methods to find cheap, undervalued players. Competing against teams with almost 10 times the salary budget such as the Yankees, Beane analyzed player statistics in ways that were never analyzed before to put together a team of "misfits" who would make it to the playoffs.  Beane changed the game of baseball, by demonstrating that on top of traditional scouting methods to find players, players could be found analyzing statistics and teams could be put together to maximize efficiency while minimizing cost. Since the early 2000's, there have been many sophisticated and highly advanced statistical methods used to generate advanced baseball statistics.  The data available to Beane at the time was much more simple, and Beane used the data available to him to create new metrics for analyzing players. The process in which Beane analyzed data is the inspiration for the data analysis that follows, where we will walk through his thought process.
+  
+## Explanation of Variables
+  The data set I have found includes comparatively basic data that would have been available to Beane to put together a team. This data originates from baseball-reference.com, and was compiled into a dataset called 'Moneyball' on kaggle (2). Baseball-reference is a website that compiles baseball data regularly, and has readily available datasets to analyze.  The data set includes team data from 1962 - 2012 for all 30 teams, however in this dataset there are 39 uniques teams found in the observational units. This can be attributed to the fact that often with professional sports teams, a team will move from one city to another, or could even change their name. There have always been 30 professional baseball teams in the MLB, thus nine of the unique teams in the data set did not disappear rather they changed their city or ballclub name. This data is a sample from the baseball-reference source since there were team statistics from 2012 to the present, so the data in this data set does not include the team statistics data for all baseball history, rather a chunk of 50 years. For the sake of convenience, the data set created on kaggle was most likely sampled to analyze the team statistics for these specific 50 years. The data set shows statistics for each team yearly with these variables (3):
+
+Team: The name of the team.
+League: The league in which the team plays in.
+Year: The year in which the team data is recorded.
+Runs Scored (RS): The total numbers of runs scored by the team for the specific season.
+Runs Against (RA): The total number of runs scored against the team for the specific season.
+Wins (W): The number of wins each team recorded for the specific season.
+Playoffs: This is a binary variable that gives a 1 if the team made the playoffs and a 0 if the team did not make the playoffs that year.
+RankSeason: This is the rank of the team at the end of the season.
+RankPlayoffs: This is the rank of the team at the end of the playoffs, if they qualified for the playoffs.
+Games (G): The total number of games played by the team that year.
+On-Base Percentage (OBP): A baseball statistic which measures how frequently a runner reaches base. This statistic is calculated by taking the total number of times a batter got a hit, hit by pitch, or walked and divides this by the total number of plate appearances. The statistic in this data set measures the team's average OBP.    
+Slugging Percentage (SLG): A baseball statistic that measures the batting productivity of a batter.  This statistic is calculated by assigning weights to the types of hits a batter gets.  Thus a base hit is weighted less than a homerun or a triple, so power hitters typically have higher a slugging percentage since they get larger hits. The statistic in this data set measures the team's average SLG.    
+Batting Average (BA): A baseball statistic that measures the number of hits a batter gets divided by the number of at-bats a batter has.
+Opponent On-Base Percentage (OOBP): This is the on-base percentage that opposing teams average against the team.
+Opponent Slugging Percentage (OSLG): This is the slugging percentage that opposing teams average against the team.
+
+## Potential Issues
+  While analyzing specific team performance over the years, it is important to notice that instead of 30 unique teams for the observational units, there are 39.  As explained before, the data set includes data for teams whom no longer belong to cities they once belonged to, and thus it might be difficult to draw conclusions over the years if the team names do not match up.  Throwing out the data from these teams could harm an analysis of performance, and could harm the conclusions as there are many other confounding variables that come into effect with a team that moves cities. Another potential issue could be the fact that teams who did not make the playoffs do not have season rank data, and thus it could also be helpful to see how teams did within their league, or to better analyze the competition in one league compared to the other. Opponent team statistics such as OOBP and OSLG are not included for teams prior to the year of 1999, as these statistics may not have been recorded earlier than this year.  This could raise the question whether there is other missing information from older years in which data was not recorded.
+  
+## Analysis
+  Facing a short budget, Beane recognized he quite literally had to buy wins. There is no question that reaching the playoffs in baseball is a successful season, with the World Series being the ultimate goal.  But in order to make the playoffs, you have to win games.  To do this, he needed to buy players to replace key players who left the year before and he needed to find a combination of players to buy these wins. Thus, it would be a good start to find how many wins are typically needed to make the playoffs. To be more specific, we can subset the dataframe to include only teams that made the playoffs, and then find the average number of wins for these teams. Thus we can see that teams from the years 1962-2012 on average need 95 wins to make the playoffs.  Beane also concluded that he needed 95 wins to make the playoffs, and thus he needed to build a team that could win 95 games. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=FALSE}
+library(ggplot2)
+df <- read.csv("/Users/nickbourdeau/Desktop/STAT 3080/baseball.csv")
+```
+
+```{r}
+playoff_teams <- df[df$Playoffs == 1,]
+ggplot(df, aes(x = W, y = Team, color = as.factor(Playoffs)))+
+  geom_point() + scale_color_manual(values = c('0' = 'Black', '1' = 'Blue'),
+        name = 'Playoffs', labels = c("No", "Yes")) +
+  geom_vline(xintercept = 95, size = 1, color = 'red',
+  alpha = 0.3) + xlab('Wins')  + ggtitle('Team Wins per Season') +
+  scale_x_continuous(breaks=seq(40, 120, 5))
+```
+  By creating a plot with wins on the x-axis and teams on the y-axis, it is evident how many wins are typically needed to make the playoffs by differentiating the points by whether they made the playoffs or not. Each point for a specific team represents a specific season for that team, thus why most teams have numerous points for the information obtained.  We see that typically a team makes the playoffs with around 90 wins, and the red line(1) represents the 95 win mark, which is not far off.  Thus we can see that teams from the years 1962-2012 on average need 95 wins to make the playoffs. We can also see outliers who won close to 80 games and still made the playoffs, and this could be attributed to the fact that the conference in which those teams played in that year could have been lacking in competition. 
+  
+  Beane also concluded that he needed 95 wins to make the playoffs, and thus he needed to build a team that could win 95 games.  Hoever in order to win games, you must score more runs than the opponent.  Thus, we will subset the data set to teams with over 95 wins, and find the number of runs needed to win 95 games. By finding the mean of the number of runs scored, it is determined that to win 95 games a team must score 796 runs per season. We subset the data set to teams who won at least 95 games and plot the total runs scored.
+
+```{r}
+win_teams <- df[df$W >= 95,]
+ggplot(win_teams, aes(x = RS, y = Team,
+    color = as.factor(Playoffs))) + geom_point() +
+  scale_color_manual(values = c('0' = 'Black', '1' = 'Blue'),
+  name = 'Playoffs', labels = c("No", "Yes")) +
+  xlab("Runs Scored") + geom_vline(xintercept = 796,
+  size = 1, color = 'red', alpha = 0.4) +
+  ggtitle('Runs Scored for Teams with Above 95 Wins') +
+  scale_x_continuous(breaks=seq(550, 1050, 50))
+```
+Thus to win 95 games, we see that a team must score around 796 runs.  The red line (1) represents the average number of runs for the graph above, and we see that there is significant variation around this average.  There are in fact teams that scored around 600 runs and still managed to win 95 games. There are also a few teams that scored above the average number of runs and still did not manage to make the playoffs. This brings us to the signifiance of OBP and SLG, as Beane then sought to use these statistics especially, with some other available statistics, to field a team of players that could produce 796 runs. The thought process is simple, the more that runners get on base, the more they can score.  The more they can score, the more wins they can create. OBP is a great measure of calculating how frequently a team reaches base, thus we want to find the OBP and SLG to produce runs. Thus we create a table that shows the average seasonal OBP and SLG for both the team and the opposing team to see how productive the team must be.
+
+```{r, include=FALSE}
+avg_runs<- df[df$RS >= 796 & df$Year >= 1999,]
+a <- mean(avg_runs$OBP)
+b <- mean(avg_runs$OOBP)
+c <- mean(avg_runs$SLG)
+d <- mean(avg_runs$OSLG)
+Team_Stats <- c(a,c)
+Opponent_Stats <- c(b,d)
+Stats <- cbind(Team_Stats, Opponent_Stats)
+colnames(Stats) <- c('Team Requirements', 'Opponent Requirements')
+row.names(Stats) <- c('OBP', 'SLG')
+```
+
+```{r}
+Stats
+```
+Thus a team must have an average OBP of 0.346 and an average SLG of 0.446 in order to score 796 runs for a season.  They must also find ways defensively to hold opponents to an average 0.333 OBP and 0.425 SLG percentage.
+
+```{r}
+ggplot(df, aes(x = OBP, y = W, color = as.factor(Playoffs))) +
+  geom_point() + xlab('On-Base Percentage') + ylab('Wins') +
+geom_smooth(method = lm, se = FALSE, color = 'red') +
+  scale_color_manual(values = c('0' = 'Black', '1' = 'Blue'),
+name = 'Playoffs', labels = c("No", "Yes")) +
+  ggtitle('Wins vs On-Base Percentage')
+```
+We can see that the On-Base Percentage has a positive relationship with Wins, as when the team OBP increases, teams typically tend to win more games per season.  By filtering the point to show teams that made the playoffs or not, we can see that the teams that made the playoffs have a slightly shifted greater average OBP versus the teams who didn't, but there is a lot of variability between those.
+
+```{r}
+ggplot(df, aes(x = SLG, y = W, color = as.factor(Playoffs))) +
+  geom_point() + xlab('Slugging Percentage') + ylab('Wins') +
+  geom_smooth(method = lm, se = FALSE, color = 'red') +
+  scale_color_manual(values = c('0' = 'Black', '1' = 'Blue'),
+  name = 'Playoffs', labels = c("No", "Yes")) +
+  ggtitle('Wins vs Slugging Percentage')
+```
+Similar to the on-base percentage graph, we can see a positive relationship between wins and slugging percentage.  The slope of this regression line is not as steep as the regression line for on-base percentage and and we also see that there is much more variability of making the playoffs than the other graph.  On-base percentage seems to be a better measure of making the playoffs versus slugging percentage, however both do show positive relationships. 
+
+To measure just how successful this strategy was for Beane and the Oakland A's in 2002, we will create a linegraph to look at how many wins the team has won yearly.  That year, the Oakland A's made it to the playoffs with a roster that costed almost ten times less than most of their opponents, and thus Beane changed the way people looked at analyzing baseball.
+```{r}
+athletics <- df[df$Team == 'OAK',]
+ggplot(athletics, aes(x = Year, y = W, color = as.factor(Playoffs)))+
+  geom_point() + geom_line(color = 'black') +
+  scale_color_manual(values = c('0' = 'Red', '1' = 'Blue'),
+  name = 'Playoffs', labels = c("No", "Yes")) +
+geom_vline(xintercept = 2002, size = 1, color = 'red', alpha = 0.4) +
+  ggtitle("Oakland A's Wins per Season")
+```
+There is a lot of variability in winning from year to year, as it often is with baseball.  The Oakland A's experienced the some of the most wins in 2002 then they ever have in 50 years (4).  There is also a decrease in wins the following year for the A's, and continued to do so for the next couple of years. This could be due to the fact that other teams soon picked up on these statistical methods to analyze players, and also employed methods to find cheaper players with an even larger budget.  Regardless, if salary information was included on this data set then it would be easy to compare the production of teams comparatively to their salary, and we would see that the Oakland A's in 2002 were extraordinarily succesful for the budget they had. 
+
+## References
+(1) <https://www.rdocumentation.org/packages/ggplot2/versions/0.9.1/topics/geom_vline> : geom_vline()
+(2) <https://www.kaggle.com/wduckett/moneyball-mlb-stats-19622012> : 'Moneyball' data set on Kaggle and its information and inspiration about the data : Source of data
+(3) <http://m.mlb.com/glossary/advanced-stats> : Descriptions of batting statistics
+(4) <https://en.wikipedia.org/wiki/2002_Oakland_Athletics_season> : Description of 2002 A's Season
